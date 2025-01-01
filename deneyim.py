@@ -2,6 +2,17 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
+# Add custom CSS to hide the GitHub icon
+hide_github_icon = """
+#GithubIcon {
+  visibility: hidden;
+}
+"""
+st.markdown(hide_github_icon, unsafe_allow_html=True)
+
+# Your app code goes here
+
+
 if 'data' not in st.session_state:
     st.session_state['data'] = []
 if 'calculated_amount' not in st.session_state:
