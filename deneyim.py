@@ -1,78 +1,158 @@
 import streamlit as st
 import pandas as pd
+from datetime import date
 
+if 'data' not in st.session_state:
+    st.session_state['data'] = []
+if 'calculated_amount' not in st.session_state:
+    st.session_state['calculated_amount'] = None
+if 'counter' not in st.session_state:
+    st.session_state['counter'] = 0
 
-def main():
-    # Set page config
-    st.set_page_config(page_title="Başvuru Bilgileri", layout="wide")
+def sabit_tutar_hesapla():
+    return 10000
 
-    # Custom CSS to match the design
-    st.markdown("""
-        <style>
-        .stSelectbox {
-            margin-bottom: 10px;
-        }
-        .main {
-            padding: 20px;
-        }
-        .status-badge {
-            background-color: #f0f2f6;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+def format_currency(amount):
+    return f"{amount:,.2f} TL"
 
-    # Header
-    col1, col2 = st.columns([3, 1])
+st.title('İş Deneyimi Girişi')
+
+experience_type = st.selectbox(
+    "İş Deneyimi Türünü Seçin",
+    ("EKAP İş Deneyim Belgesi Ekle", "Mezuniyet Belgesi Ekle", "Yapı Kullanma İzin Belgesi Ekle")
+)
+
+today = date.today()
+application_date = st.date_input(
+    'Başvuru Tarihi',
+    min_value=date(2000, 1, 1),
+    value=today
+)
+
+if experience_type == "Mezuniyet Belgesi Ekle":
+    graduation_date = st.date_input(
+        'Mezuniyet Tarihi',
+        min_value=date(2000, 1, 1),
+        value=None
+    )
+
+    calculate_button = st.button('Hesapla')
+    if calculate_button:
+        if graduation_date:
+            tutar = sabit_tutar_hesapla()
+            formatted_amount = format_currency(tutar)
+            st.session_state['calculated_amount'] = formatted_amount
+            st.success(f'Güncel Belge Tutarı: {formatted_amount}')
+
+    if st.session_state['calculated_amount']:
+        add_button = st.button('Tabloya Ekle')
+        if add_button:
+            st.session_state['counter'] += 1
+            new_entry = {
+                'No': st.session_state['counter'],
+                'Başvuru Tarihi': application_date,
+                'Sözleşme Tarihi/Diploma Tarihi': graduation_date,
+                'Geçici Kabul/İskan Tarihi': '-',
+                'İlk Sözleşme Bedeli': '-',
+                'Belge Tutarı': '-',
+                'Güncel Belge Tutarı': st.session_state['calculated_amount']
+            }
+            st.session_state['data'].append(new_entry)
+            st.session_state['calculated_amount'] = None
+            st.success('Kayıt başarıyla eklendi!')
+
+elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
+    col1, col2 = st.columns(2)
+
     with col1:
-        st.title("Başvuru Bilgileri")
-        st.markdown("Yapı Müteahhitleri İl Yetki Belgesi Komisyon Başvuru Dosyası İnceleme Formu")
+        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None)
+        building_class = st.selectbox('Yapı Sınıfı', [
+            'I-A', 'I-B',
+            'II-A', 'II-B', 'II-C',
+            'III-A', 'III-B',
+            'IV-A', 'IV-B', 'IV-C',
+            'V-A', 'V-B', 'V-C', 'V-D'
+        ])
+        completion_percentage = st.number_input('Tamamlanma Yüzdesi (%)', min_value=0.0, max_value=100.0, value=0.0, step=0.1)
 
-    # Company information
-    st.markdown("### ABAK İNŞAAT MÜHENDİSLİK EMLAK TURİZM HAYVANCILIK SANAYİ VE TİCARET LİMİTED ŞİRKETİ")
-    st.markdown("Başvuru No: 795666617")
+    with col2:
+        acceptance_date = st.date_input('Geçici Kabul/İskan Tarihi', min_value=date(2000, 1, 1), value=None)
+        building_area = st.number_input('Yapı Alanı (m²)', min_value=0.0, value=0.0)
 
-    # Navigation tabs
-    tabs = st.tabs(
-        ["Başvuru", "Başvuru Dosyaları", "Başvuru Detay Bilgileri", "İnceleme", "Karar", "Şikayet", "İtiraz"])
+    calculate_button = st.button('Hesapla')
+    if calculate_button:
+        if None not in (contract_date, acceptance_date) and building_area != 0.0:
+            tutar = sabit_tutar_hesapla()
+            formatted_amount = format_currency(tutar)
+            st.session_state['calculated_amount'] = formatted_amount
+            st.success(f'Güncel Belge Tutarı: {formatted_amount}')
+        else:
+            st.error('Lütfen tüm alanları doldurun.')
 
-    with tabs[0]:
-        # Form fields
-        col1, col2, col3 = st.columns([2, 1, 1])
+    if st.session_state['calculated_amount']:
+        add_button = st.button('Tabloya Ekle')
+        if add_button:
+            st.session_state['counter'] += 1
+            new_entry = {
+                'No': st.session_state['counter'],
+                'Başvuru Tarihi': application_date,
+                'Sözleşme Tarihi/Diploma Tarihi': contract_date,
+                'Geçici Kabul/İskan Tarihi': acceptance_date,
+                'İlk Sözleşme Bedeli': building_class,
+                'Belge Tutarı': f"{building_area:,.2f} m²",
+                'Güncel Belge Tutarı': st.session_state['calculated_amount']
+            }
+            st.session_state['data'].append(new_entry)
+            st.session_state['calculated_amount'] = None
+            st.success('Kayıt başarıyla eklendi!')
 
-        with col1:
-            # Document checks
-            st.markdown("#### Belge Kontrolleri")
-            st.selectbox("Ticaret Odası Kayıt Belgesi", ["Uygun"], key="ticaret")
-            st.selectbox("Türkiye Ticaret Sicil Gazetesi", ["Uygun"], key="sicil")
-            st.selectbox("Bildirim Yükümlülüğü Taahhütnamesi", ["Uygun"], key="taahhut")
+else:  # EKAP İş Deneyim Belgesi Ekle
+    col1, col2 = st.columns(2)
 
-            # Numeric inputs
-            st.markdown("#### Finansal Bilgiler")
-            st.number_input("Cari Oran", value=0.5430, format="%.4f", key="cari_oran")
-            st.number_input("Öz Kaynak Oranı", value=0.3651, format="%.4f", key="oz_kaynak")
-            st.number_input("Kısa Vadeli Banka Borçlarının Öz Kaynak Oranı", value=0.46, format="%.2f",
-                            key="banka_borc")
-            st.number_input("Banka Referans Mektubu", value=4174841.12, format="%.2f", key="banka_ref")
+    with col1:
+        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None)
+        initial_amount = st.number_input('İlk Sözleşme Bedeli', min_value=0.0, value=0.0)
 
-            # Group determination
-            st.number_input("Grup Belirlemesine Esas İş Deneyim Miktarı (TL)", value=60920467.26, format="%.2f",
-                            key="is_deneyim")
+    with col2:
+        acceptance_date = st.date_input('Geçici Kabul/İskan Tarihi', min_value=date(2000, 1, 1), value=None)
+        document_amount = st.number_input('Belge Tutarı', min_value=0.0, value=0.0)
 
-        with col2:
-            # Experience fields
-            st.markdown("#### Deneyim Bilgileri")
-            st.selectbox("İş Hacmi Bilgileri", ["Yok", "Var"], key="is_hacmi")
-            st.selectbox("Usta İş Gücü Bilgisi", ["Var", "Yok"], key="usta_bilgisi")
-            st.selectbox("Teknik Personel İş Gücü Bilgisi", ["Yok", "Var"], key="teknik_personel")
+    calculate_button = st.button('Hesapla')
+    if calculate_button:
+        if None not in (contract_date, acceptance_date) and 0.0 not in (initial_amount, document_amount):
+            tutar = sabit_tutar_hesapla()
+            formatted_amount = format_currency(tutar)
+            st.session_state['calculated_amount'] = formatted_amount
+            st.success(f'Güncel Belge Tutarı: {formatted_amount}')
+        else:
+            st.error('Lütfen tüm alanları doldurun.')
 
-        # Notes section
-        st.markdown("#### Açıklama")
-        st.text_area("", value="Grup Belirlemesine Esas İş Deneyim Miktarı (TL) F Grubu için uygun değildir.",
-                     height=100)
+    if st.session_state['calculated_amount']:
+        add_button = st.button('Tabloya Ekle')
+        if add_button:
+            st.session_state['counter'] += 1
+            new_entry = {
+                'No': st.session_state['counter'],
+                'Başvuru Tarihi': application_date,
+                'Sözleşme Tarihi/Diploma Tarihi': contract_date,
+                'Geçici Kabul/İskan Tarihi': acceptance_date,
+                'İlk Sözleşme Bedeli': format_currency(initial_amount),
+                'Belge Tutarı': format_currency(document_amount),
+                'Güncel Belge Tutarı': st.session_state['calculated_amount']
+            }
+            st.session_state['data'].append(new_entry)
+            st.session_state['calculated_amount'] = None
+            st.success('Kayıt başarıyla eklendi!')
 
-
-if __name__ == "__main__":
-    main()
+if st.session_state['data']:
+    st.write('### Kayıtlar')
+    df = pd.DataFrame(st.session_state['data']).astype({
+        'No': int,
+        'Başvuru Tarihi': 'datetime64[ns]',
+        'Sözleşme Tarihi/Diploma Tarihi': str,
+        'Geçici Kabul/İskan Tarihi': str,
+        'İlk Sözleşme Bedeli': str,
+        'Belge Tutarı': str,
+        'Güncel Belge Tutarı': str
+    })
+    st.dataframe(df, hide_index=True)
