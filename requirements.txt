@@ -1,0 +1,8 @@
+pandas==2.2.3
+python_dateutil==2.9.0.post0
+streamlit==1.41.1
+streamlit_antd_components==0.3.2
+streamlit_javascript==0.1.5
+streamlit_nested_layout==0.1.4
+streamlit_option_menu==0.4.0
+streamlit_sparrow_labeling==0.1.1
