@@ -1,0 +1,236 @@
+{
+  "periods": [
+    {
+      "yil": 2000,
+      "donem": "2000_1",
+      "yayim_baslangic": "2020-02-25",
+      "yayim_bitis": "2001-02-09",
+      "gecerlilik_baslangic": "2000-01-01",
+      "gecerlilik_bitis": "2000-12-31"
+    },
+    {
+      "yil": 2001,
+      "donem": "2001_1",
+      "yayim_baslangic": "2001-02-10",
+      "yayim_bitis": "2002-03-06",
+      "gecerlilik_baslangic": "2001-01-01",
+      "gecerlilik_bitis": "2001-12-31"
+    },
+    {
+      "yil": 2002,
+      "donem": "2002_1",
+      "yayim_baslangic": "2002-03-07",
+      "yayim_bitis": "2003-01-16",
+      "gecerlilik_baslangic": "2002-01-01",
+      "gecerlilik_bitis": "2002-12-31"
+    },
+    {
+      "yil": 2003,
+      "donem": "2003_1",
+      "yayim_baslangic": "2003-01-17",
+      "yayim_bitis": "2004-02-11",
+      "gecerlilik_baslangic": "2003-01-01",
+      "gecerlilik_bitis": "2003-12-31"
+    },
+    {
+      "yil": 2004,
+      "donem": "2004_1",
+      "yayim_baslangic": "2004-02-12",
+      "yayim_bitis": "2005-02-14",
+      "gecerlilik_baslangic": "2004-01-01",
+      "gecerlilik_bitis": "2004-12-31"
+    },
+    {
+      "yil": 2005,
+      "donem": "2005_1",
+      "yayim_baslangic": "2005-02-15",
+      "yayim_bitis": "2006-03-11",
+      "gecerlilik_baslangic": "2005-01-01",
+      "gecerlilik_bitis": "2005-12-31"
+    },
+    {
+      "yil": 2006,
+      "donem": "2006_1",
+      "yayim_baslangic": "2006-03-12",
+      "yayim_bitis": "2007-03-09",
+      "gecerlilik_baslangic": "2006-01-01",
+      "gecerlilik_bitis": "2006-12-31"
+    },
+    {
+      "yil": 2007,
+      "donem": "2007_1",
+      "yayim_baslangic": "2007-03-10",
+      "yayim_bitis": "2008-03-25",
+      "gecerlilik_baslangic": "2007-01-01",
+      "gecerlilik_bitis": "2007-12-31"
+    },
+    {
+      "yil": 2008,
+      "donem": "2008_1",
+      "yayim_baslangic": "2008-03-26",
+      "yayim_bitis": "2009-03-18",
+      "gecerlilik_baslangic": "2008-01-01",
+      "gecerlilik_bitis": "2008-12-31"
+    },
+    {
+      "yil": 2009,
+      "donem": "2009_1",
+      "yayim_baslangic": "2009-03-19",
+      "yayim_bitis": "2010-03-31",
+      "gecerlilik_baslangic": "2009-01-01",
+      "gecerlilik_bitis": "2009-12-31"
+    },
+    {
+      "yil": 2010,
+      "donem": "2010_1",
+      "yayim_baslangic": "2010-04-01",
+      "yayim_bitis": "2011-04-27",
+      "gecerlilik_baslangic": "2010-01-01",
+      "gecerlilik_bitis": "2010-12-31"
+    },
+    {
+      "yil": 2011,
+      "donem": "2011_1",
+      "yayim_baslangic": "2011-04-28",
+      "yayim_bitis": "2012-04-27",
+      "gecerlilik_baslangic": "2011-01-01",
+      "gecerlilik_bitis": "2011-12-31"
+    },
+    {
+      "yil": 2012,
+      "donem": "2012_1",
+      "yayim_baslangic": "2012-04-28",
+      "yayim_bitis": "2013-04-23",
+      "gecerlilik_baslangic": "2012-01-01",
+      "gecerlilik_bitis": "2012-12-31"
+    },
+    {
+      "yil": 2013,
+      "donem": "2013_1",
+      "yayim_baslangic": "2013-04-24",
+      "yayim_bitis": "2014-05-05",
+      "gecerlilik_baslangic": "2013-01-01",
+      "gecerlilik_bitis": "2013-12-31"
+    },
+    {
+      "yil": 2014,
+      "donem": "2014_1",
+      "yayim_baslangic": "2014-05-06",
+      "yayim_bitis": "2015-03-18",
+      "gecerlilik_baslangic": "2014-01-01",
+      "gecerlilik_bitis": "2014-12-31"
+    },
+    {
+      "yil": 2015,
+      "donem": "2015_1",
+      "yayim_baslangic": "2015-03-19",
+      "yayim_bitis": "2016-04-08",
+      "gecerlilik_baslangic": "2015-01-01",
+      "gecerlilik_bitis": "2015-12-31"
+    },
+    {
+      "yil": 2016,
+      "donem": "2016_1",
+      "yayim_baslangic": "2016-04-09",
+      "yayim_bitis": "2017-05-03",
+      "gecerlilik_baslangic": "2016-01-01",
+      "gecerlilik_bitis": "2016-12-31"
+    },
+    {
+      "yil": 2017,
+      "donem": "2017_1",
+      "yayim_baslangic": "2017-05-04",
+      "yayim_bitis": "2018-04-25",
+      "gecerlilik_baslangic": "2017-01-01",
+      "gecerlilik_bitis": "2017-12-31"
+    },
+    {
+      "yil": 2018,
+      "donem": "2018_1",
+      "yayim_baslangic": "2018-04-26",
+      "yayim_bitis": "2019-03-15",
+      "gecerlilik_baslangic": "2018-01-01",
+      "gecerlilik_bitis": "2018-12-31"
+    },
+    {
+      "yil": 2019,
+      "donem": "2019_1",
+      "yayim_baslangic": "2019-03-16",
+      "yayim_bitis": "2020-03-09",
+      "gecerlilik_baslangic": "2019-01-01",
+      "gecerlilik_bitis": "2019-12-31"
+    },
+    {
+      "yil": 2020,
+      "donem": "2020_1",
+      "yayim_baslangic": "2020-03-10",
+      "yayim_bitis": "2021-03-23",
+      "gecerlilik_baslangic": "2020-01-01",
+      "gecerlilik_bitis": "2020-12-31"
+    },
+    {
+      "yil": 2021,
+      "donem": "2021_1",
+      "yayim_baslangic": "2021-03-24",
+      "yayim_bitis": "2022-02-17",
+      "gecerlilik_baslangic": "2021-01-01",
+      "gecerlilik_bitis": "2021-12-31"
+    },
+    {
+      "yil": 2022,
+      "donem": "2022_1",
+      "yayim_baslangic": "2022-02-18",
+      "yayim_bitis": "2022-06-20",
+      "gecerlilik_baslangic": "2022-01-01",
+      "gecerlilik_bitis": "2022-06-01"
+    },
+    {
+      "yil": 2022,
+      "donem": "2022_2",
+      "yayim_baslangic": "2022-06-21",
+      "yayim_bitis": "2022-09-12",
+      "gecerlilik_baslangic": "2022-06-02",
+      "gecerlilik_bitis": "2022-06-30"
+    },
+    {
+      "yil": 2022,
+      "donem": "2022_3",
+      "yayim_baslangic": "2022-09-13",
+      "yayim_bitis": "2023-02-10",
+      "gecerlilik_baslangic": "2022-07-01",
+      "gecerlilik_bitis": "2022-12-31"
+    },
+    {
+      "yil": 2023,
+      "donem": "2023_1",
+      "yayim_baslangic": "2023-02-11",
+      "yayim_bitis": "2023-08-11",
+      "gecerlilik_baslangic": "2023-01-01",
+      "gecerlilik_bitis": "2023-06-30"
+    },
+    {
+      "yil": 2023,
+      "donem": "2023_2",
+      "yayim_baslangic": "2023-08-12",
+      "yayim_bitis": "2024-04-19",
+      "gecerlilik_baslangic": "2023-07-01",
+      "gecerlilik_bitis": "2023-12-31"
+    },
+    {
+      "yil": 2024,
+      "donem": "2024_1",
+      "yayim_baslangic": "2024-04-20",
+      "yayim_bitis": "2025-01-30",
+      "gecerlilik_baslangic": "2024-01-01",
+      "gecerlilik_bitis": "2024-12-31"
+    },
+    {
+      "yil": 2025,
+      "donem": "2025_1",
+      "yayim_baslangic": "2025-01-31",
+      "yayim_bitis": "2025-12-31",
+      "gecerlilik_baslangic": "2025-01-01",
+      "gecerlilik_bitis": "2025-12-31"
+    }
+  ]
+}
