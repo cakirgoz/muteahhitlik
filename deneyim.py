@@ -83,35 +83,38 @@ if experience_type == "Mezuniyet Belgesi Ekle":
 
     calculate_button = st.button('Hesapla')
     if calculate_button:
-        print(application_date, graduation_date)
         if graduation_department == "Diğer Bölümler":
             st.error(
                 "Yönetmeliğin 13/2/a hükmü uyarınca: Mezuniyet belgeleri bakımından inşaat mühendisliği ve mimarlık bölümleri benzer iş grubuna denk sayılır. İnşaat mühendisliği ve mimarlık bölümleri haricinde mezuniyet belgesi iş deneyimi olarak dikkate alınmaz.")
             st.stop()
 
-        if graduation_date:
-            is_valid, error_message = validate_dates(application_date, graduation_date)
-            if not is_valid:
-                st.error(error_message)
-            else:
-                tutar, calc_details = mezuniyet_guncelle(
-                    application_date,
-                    graduation_date,
-                    has_experience_certificate
-                )
-                formatted_amount = format_currency(tutar)
-                st.session_state['calculated_amount'] = formatted_amount
-
-                # Display results
-                st.success(f'Güncel Belge Tutarı: {formatted_amount}')
-                st.info(
-                    f"Hesaplamaya esas yıl: {calc_details['yillar']} yıl, "
-                    f"ay: {calc_details['aylar']} ay, "
-                    f"gün: {calc_details['gunler']} gün\n\n"
-                    f"Yıllık belge tutarı: {format_currency(calc_details['yillik_tutar'])}"
-                )
-        else:
+        if graduation_date is None:
             st.error('Lütfen mezuniyet tarihini giriniz.')
+            st.stop()
+
+        # Check if graduation date is valid (not in the future)
+        if graduation_date > application_date:
+            st.error('Mezuniyet tarihi başvuru tarihinden sonra olamaz.')
+            st.stop()
+
+        # For graduation certificates, we use a different validation approach
+        # since we don't have contract and acceptance dates
+        tutar, calc_details = mezuniyet_guncelle(
+            application_date,
+            graduation_date,
+            has_experience_certificate
+        )
+        formatted_amount = format_currency(tutar)
+        st.session_state['calculated_amount'] = formatted_amount
+
+        # Display results
+        st.success(f'Güncel Belge Tutarı: {formatted_amount}')
+        st.info(
+            f"Hesaplamaya esas yıl: {calc_details['yillar']} yıl, "
+            f"ay: {calc_details['aylar']} ay, "
+            f"gün: {calc_details['gunler']} gün\n\n"
+            f"Yıllık belge tutarı: {format_currency(calc_details['yillik_tutar'])}"
+        )
 
 elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
     col1, col2 = st.columns(2)
