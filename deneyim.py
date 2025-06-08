@@ -68,7 +68,7 @@ if experience_type == "Mezuniyet Belgesi Ekle":
     with col1:
         graduation_date = st.date_input(
             'Mezuniyet Tarihi',
-            min_value=date(2000, 1, 1),
+            min_value=date(1900, 1, 1),
             value=None
         )
 
