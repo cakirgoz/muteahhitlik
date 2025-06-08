@@ -7,6 +7,11 @@ from period_finder import (
 )
 from ekap_max_tutar import tutar_bul
 
+
+current_directory = os.path.dirname(os.path.abspath(__file__))
+max_json_path = os.path.join(current_directory, 'max_is_tutari.json')
+
+
 def format_currency(amount):
     """Format a number as Turkish Lira currency string with dots for thousands and comma for decimals"""
     formatted = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -267,46 +272,9 @@ def calculate_max_industrial_amount(approval_date, authority_group, teblig_tarih
     period = donem_bul(approval_date, teblig_tarih_secimi)
 
 
-    base_amount = tutar_bul('max_is_tutari.json', approval_date, authority_group, teblig_tarih_secimi)
+    base_amount = tutar_bul(max_json_path, approval_date, authority_group, teblig_tarih_secimi)
     print(base_amount)
     return base_amount
-
-
-# def calculate_max_industrial_amount(approval_date, authority_group, teblig_tarih_secimi):
-#     """
-#     Calculates maximum allowed document amount based on approval date and authority group.
-#     This is a placeholder function - to be updated with actual logic later.
-#
-#     Args:
-#         approval_date (datetime.date): Approval date of the building permit
-#         authority_group (str): Authority group at the time of approval
-#
-#     Returns:
-#         float: Maximum allowed document amount
-#     """
-#     import random
-#     # Placeholder implementation - replace with actual logic later
-#     base_amounts = {
-#         'A': 1000000,
-#         'B': 800000,
-#         'B1': 700000,
-#         'C': 600000,
-#         'C1': 500000,
-#         'D': 400000,
-#         'D1': 300000,
-#         'E': 250000,
-#         'E1': 200000,
-#         'F': 150000,
-#         'F1': 100000,
-#         'G': 75000,
-#         'G1': 50000,
-#         'H': 25000
-#     }
-#
-#     base_amount = base_amounts.get(authority_group, 0)
-#     # Add some randomness for demonstration - remove this in final implementation
-#     variation = random.uniform(0.8, 1.2)
-#     return base_amount * variation
 
 
 def determine_industrial_document_amount(industrial_type, year_category, document_amount,
