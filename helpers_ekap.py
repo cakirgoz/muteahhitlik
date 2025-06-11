@@ -6,10 +6,12 @@ from period_finder import (
     donem_bul
 )
 from ekap_max_tutar import tutar_bul
+from helpers_mezuniyet import get_price_for_date
 
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 max_json_path = os.path.join(current_directory, 'max_is_tutari.json')
+mezuniyet_tutar_json_path = os.path.join(current_directory, 'mezuniyet_tutar.json')
 
 
 def format_currency(amount):
@@ -54,43 +56,57 @@ def mezuniyet_guncelle(tarih1, tarih2, has_experience_cert=False):
         tuple: (float: Updated amount based on time difference,
                dict: Calculation details including years, months, days)
     """
-    yillik_tutar = 5668750
+    # yillik_tutar = 5668750
+    yillik_tutar = get_price_for_date(tarih1, mezuniyet_tutar_json_path)
+    print(tarih1)
+    print(yillik_tutar)
+    if yillik_tutar:
+        # Calculate initial differences
+        yillar = tarih1.year - tarih2.year
+        aylar = tarih1.month - tarih2.month
+        gunler = tarih1.day - tarih2.day
 
-    # Calculate initial differences
-    yillar = tarih1.year - tarih2.year
-    aylar = tarih1.month - tarih2.month
-    gunler = tarih1.day - tarih2.day
+        # Adjust for negative days
+        if gunler < 0:
+            if tarih1.year % 4 == 0 and tarih1.month - 1 == 2:
+                gunler += 29
+                aylar -= 1
+            elif tarih1.year % 4 != 0 and tarih1.month - 1 == 2:
+                gunler += 28
+                aylar -= 1
+            elif tarih1.month - 1 == 1 or tarih1.month - 1 == 3 or tarih1.month - 1 == 5 or tarih1.month - 1 == 7 or tarih1.month - 1 == 8 or tarih1.month == 10 - 1 or tarih1.month -1 == 0:
+                gunler += 31
+                aylar -= 1
+            else:
+                gunler += 30
+                aylar -= 1
 
-    # Adjust for negative days
-    if gunler < 0:
-        gunler += 30
-        aylar -= 1
+        # Adjust for negative months
+        if aylar < 0:
+            aylar += 12
+            yillar -= 1
 
-    # Adjust for negative months
-    if aylar < 0:
-        aylar += 12
-        yillar -= 1
+        # If no experience certificate and years >= 15, cap at 15 years
+        if not has_experience_cert and yillar >= 15:
+            yillar = 15
+            aylar = 0
+            gunler = 0
 
-    # If no experience certificate and years >= 15, cap at 15 years
-    if not has_experience_cert and yillar >= 15:
-        yillar = 15
-        aylar = 0
-        gunler = 0
+        # Calculate updated amount
+        guncel_tutar = (yillik_tutar * yillar) + \
+                       (yillik_tutar * aylar / 12) + \
+                       (yillik_tutar * gunler / (12 * 30))
 
-    # Calculate updated amount
-    guncel_tutar = (yillik_tutar * yillar) + \
-                   (yillik_tutar * aylar / 12) + \
-                   (yillik_tutar * gunler / (12 * 30))
-
-    # Return both the amount and calculation details
-    calc_details = {
-        'yillar': yillar,
-        'aylar': aylar,
-        'gunler': gunler,
-        'yillik_tutar': yillik_tutar
-    }
-
-    return round(guncel_tutar, 2), calc_details
+        # Return both the amount and calculation details
+        calc_details = {
+            'yillar': yillar,
+            'aylar': aylar,
+            'gunler': gunler,
+            'yillik_tutar': yillik_tutar
+        }
+        return round(guncel_tutar, 2), calc_details
+    else:
+        return (0, None)
 
 
 def calculate_building_permit_amount(building_class, building_area, completion_percentage):
