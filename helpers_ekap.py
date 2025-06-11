@@ -58,6 +58,8 @@ def mezuniyet_guncelle(tarih1, tarih2, has_experience_cert=False):
     """
     # yillik_tutar = 5668750
     yillik_tutar = get_price_for_date(tarih1, mezuniyet_tutar_json_path)
+    print(tarih1)
+    print(yillik_tutar)
     if yillik_tutar:
         # Calculate initial differences
         yillar = tarih1.year - tarih2.year
