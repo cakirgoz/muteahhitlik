@@ -23,24 +23,6 @@ def validate_building_permit_inputs(params):
                 errors.append("Authority group is missing for industrial structure (post-2019).")
 
     return errors
-# def generate_building_permit_params(inputs):
-#     return {
-#         "application_date": inputs.get("application_date"),
-#         "contract_date": inputs.get("contract_date"),
-#         "acceptance_date": inputs.get("acceptance_date"),
-#         "building_class": inputs.get("building_class"),
-#         "building_class_application_date": inputs.get("building_class_application_date"),
-#         "building_area": inputs.get("building_area"),
-#         "completion_percentage": inputs.get("completion_percentage"),
-#         "teblig_sinir_tarih_opsiyonu": inputs.get("teblig_sinir_tarih_opsiyonu"),
-#         "is_industrial": inputs.get("is_industrial"),
-#         "year_category": inputs.get("year_category"),
-#         "percentage_selected": inputs.get("percentage_selected"),
-#         "approval_date": inputs.get("approval_date"),
-#         "authority_group": inputs.get("authority_group"),
-#         "green_building": inputs.get("green_building"),
-#
-#     }
 
 def generate_building_permit_params(inputs):
     return {
@@ -66,8 +48,6 @@ def generate_building_permit_params(inputs):
 def get_unit_prices_for_building_classes(contract_date, application_date, building_class_contract,
                                          building_class_application, tarih_opsiyonu,
                                          json_path='birim_fiyatlar.json'):
-    from datetime import datetime
-    import json
 
     def date_in_range(date_obj, start_str, end_str):
         start = datetime.strptime(start_str, "%Y-%m-%d").date()
@@ -119,6 +99,47 @@ def get_unit_prices_for_building_classes(contract_date, application_date, buildi
         "unit_price_ratio": unit_price_ratio
     }
 
+def get_unit_prices_for_building_classes_tutara_esas(contract_date, building_class_contract,
+                                         tarih_opsiyonu='gecerlilik',
+                                         json_path='birim_fiyatlar.json'):
+
+    def date_in_range(date_obj, start_str, end_str):
+        start = datetime.strptime(start_str, "%Y-%m-%d").date()
+        end = datetime.strptime(end_str, "%Y-%m-%d").date()
+        return start <= date_obj <= end
+
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    if tarih_opsiyonu == "yayim":
+        field_start = "yayim_tarihi"
+        field_end = "yayim_sonu"
+    else:
+        field_start = "gecerlilik_tarihi"
+        field_end = "gecerlilik_sonu"
+
+    contract_unit_price = None
+
+
+    for record in data:
+        # Sözleşme tarihi dönemi
+        if contract_unit_price is None and date_in_range(contract_date, record[field_start], record[field_end]):
+            price = record["data"].get(building_class_contract)
+            if price is None:
+                raise ValueError(f"Seçilen tarih için seçmiş olduğunuz {building_class_contract} yapı sınıfı bulunamamıştır, girdiğiniz tarihi veya yapı sınıfını kontrol ediniz.")
+            contract_unit_price = price
+
+        # Erken çıkmak için
+        if contract_unit_price is not None:
+            break
+
+    if contract_unit_price is None:
+        raise ValueError(f"Seçilen tarih için seçmiş olduğunuz {building_class_contract} yapı sınıfı bulunamamıştır, girdiğiniz tarihi veya yapı sınıfını kontrol ediniz.")
+
+
+    return {
+        "unit_price_contract_ruhsata_esas": contract_unit_price
+    }
 
 def get_max_industrial_amount(approval_date, authority_group, tarih_opsiyonu, json_path="max_is_tutari.json"):
     def date_in_range(date_obj, start_str, end_str):
@@ -210,7 +231,7 @@ def get_green_building_factor(green_building_selected):
 
 def calculate_base_amount(params):
     area = params.get("building_area")
-    unit_price = params.get("unit_price_contract")
+    unit_price = params.get("unit_price_contract_ruhsata_esas")
     completion = params.get("completion_percentage")
 
     if area is None or unit_price is None or completion is None:
@@ -253,5 +274,3 @@ def calculate_updated_contractor_amount(params):
         raise ValueError("Güncellenmiş belge tutarı hesaplamak için contractor_base_amount ve document_update_ratio gereklidir.")
 
     return base * update_ratio
-
-
