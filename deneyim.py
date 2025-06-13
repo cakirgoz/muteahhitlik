@@ -1,23 +1,11 @@
+rapor_log = []
 import streamlit as st
 import pandas as pd
 import json
 from datetime import datetime, date
 import os
 from datetime import datetime, timedelta
-# from helpers import (
-#     format_currency,
-#     format_date,
-#     validate_dates,
-#     mezuniyet_guncelle,
-#     calculate_building_permit_amount,
-#     guncelle_belge_tutari,
-#     calculate_ufe_ratio,
-#     calculate_ekap_updated_amount
-# )
-from period_finder import (
-    json_dosyasini_oku,
-    donem_bul
-)
+
 
 from helpers_ekap import (
     format_currency,
@@ -34,6 +22,38 @@ from helpers_ekap import (
     calculate_max_industrial_amount,
     determine_industrial_document_amount
 )
+
+from helpers_ykib import (
+    validate_building_permit_inputs,
+    generate_building_permit_params,
+    get_unit_prices_for_building_classes,
+    get_max_industrial_amount,
+    get_previous_month_info,
+    get_ufe_data_and_ratio,
+    calculate_document_update_ratio,
+    get_green_building_factor,
+    calculate_base_amount,
+    calculate_contractor_base_amount,
+    calculate_updated_contractor_amount,
+    get_unit_prices_for_building_classes_tutara_esas
+)
+
+from rapor_helpers import (
+    log_unit_price_ratio,
+    log_ufe_ratio,
+    log_document_update_ratio,
+    log_base_amount,
+    log_contractor_base_amount,
+    log_updated_contractor_amount
+)
+
+# json paths
+current_dir = os.path.dirname(os.path.abspath(__file__))
+json_path_max = os.path.join(current_dir, 'max_is_tutari.json')
+json_path_birim_fiyat = os.path.join(current_dir, 'birim_fiyatlar.json')
+json_path_ufe_data = os.path.join(current_dir, 'yi_ufe_data.json')
+
+
 
 st.title('İş Deneyimi Girişi')
 
@@ -58,7 +78,8 @@ today = date.today()
 application_date = st.date_input(
     'Başvuru Tarihi',
     min_value=date(2000, 1, 1),
-    value=today
+    value=today,
+    format="DD.MM.YYYY"
 )
 
 if experience_type == "Mezuniyet Belgesi Ekle":
@@ -68,10 +89,12 @@ if experience_type == "Mezuniyet Belgesi Ekle":
     with col1:
         graduation_date = st.date_input(
             'Mezuniyet Tarihi',
-            min_value=date(1900, 1, 1),
-            value=None
+            min_value=date(1950, 1, 1),
+            value=None,
+            format = "DD.MM.YYYY"
         )
-
+    print(graduation_date)
+    print(type(graduation_date))
     with col2:
         graduation_department = st.selectbox(
             'Mezun Olunan Bölüm',
@@ -107,50 +130,77 @@ if experience_type == "Mezuniyet Belgesi Ekle":
         formatted_amount = format_currency(tutar)
         st.session_state['calculated_amount'] = formatted_amount
 
-        # Display results
-        st.success(f'Güncel Belge Tutarı: {formatted_amount}')
-        st.info(
-            f"Hesaplamaya esas yıl: {calc_details['yillar']} yıl, "
-            f"ay: {calc_details['aylar']} ay, "
-            f"gün: {calc_details['gunler']} gün\n\n"
-            f"Yıllık belge tutarı: {format_currency(calc_details['yillik_tutar'])}"
-        )
+        print(calc_details)
+        if not calc_details:
+            st.error("Mezuniyet Belgesi ile İş Deneyim Tutarı Hesabı 03.10.2020 ve sonrası başvurular için yapılmaktadır.")
+            # st.info("dfsdfsd")
+        else:
+            # Display results
+            st.success(f'Güncel Belge Tutarı: {formatted_amount}')
+            st.info(
+                f"Başvuru tarihinde geçerli yıllık Mezuniyet Belgesi tutarı: {format_currency(calc_details['yillik_tutar'])}\n\n"
+                f"Hesaplamaya esas Yıl: {calc_details['yillar']} Yıl, \n\n"
+                f"Hesaplamaya esas Ay: {calc_details['aylar']} Ay, \n\n"
+                f"Hesaplamaya esas Gün: {calc_details['gunler']} Gün\n\n"
+                f"Belge Tutarı = ({format_currency(calc_details['yillik_tutar'])} X {calc_details['yillar']}) + ({format_currency(calc_details['yillik_tutar'])} X {calc_details['aylar']} / 12 )+ ({format_currency(calc_details['yillik_tutar'])} X {calc_details['gunler']} /12/30 )\n\n"
+                f"Belge Tutarı: {formatted_amount}"
+            )
 
 elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
     col1, col2 = st.columns(2)
 
     with col1:
-        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None)
-        building_class = st.selectbox('Yapı Sınıfı', [
+        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None, format="DD.MM.YYYY")
+        building_class = st.selectbox('Sözleşme Tarihindeki Yapı Sınıfı', [
             'I-A', 'I-B', 'II-A', 'II-B', 'II-C',
-            'III-A', 'III-B', 'IV-A', 'IV-B', 'IV-C',
+            'III-A', 'III-B', 'III-C', 'IV-A', 'IV-B', 'IV-C',
             'V-A', 'V-B', 'V-C', 'V-D'
         ])
-        completion_percentage = st.number_input('Tamamlanma Yüzdesi (%)',
-                                                min_value=0.0, max_value=100.0,
-                                                value=0.0, step=0.1)
+        building_area = st.number_input('Yapı Alanı (m²)', min_value=0.0, value=0.0)
+        green_building = st.checkbox("Yeşil Bina Sertifikası Düzenlenmiş Yapı mı?")
+
         is_industrial = st.radio("Sanayi Yapısı mı?", ["Hayır", "Evet"], horizontal=True)
 
     with col2:
         acceptance_date = st.date_input('Geçici Kabul/İskan Tarihi',
-                                        min_value=date(2000, 1, 1), value=None)
-        building_area = st.number_input('Yapı Alanı (m²)', min_value=0.0, value=0.0)
-
-        if 'current_document_amount' not in st.session_state:
-            st.session_state.current_document_amount = ''
-        calculated_document_amount = st.text_input('Belge Tutarı',
-                                                   value=st.session_state.current_document_amount,
-                                                   disabled=True)
+                                        min_value=date(2000, 1, 1), value=None, format="DD.MM.YYYY")
+        building_class_application_dat = st.selectbox('Başvuru Tarihindeki Yapı Sınıfı', [
+            'I-A', 'I-B', 'II-A', 'II-B', 'II-C',
+            'III-A', 'III-B', 'IV-A', 'IV-B', 'IV-C',
+            'V-A', 'V-B', 'V-C', 'V-D'
+        ],help="Başvuru tarihindeki yapı sınıfının sözleşme tarihindeki yapı sınıfından farklı olması durumunda farklı işaretlenebilir.\\\nAksi halde sözleşme tarihindeki yapı sınıfı ile aynı olması gerekmektedir.")
+        completion_percentage = st.number_input('Tamamlanma Yüzdesi (%)',
+                                                min_value=0.0, max_value=100.0,
+                                                value=100.0, step=0.1)
+        teblig_sinir_tarih_opsiyonu = st.radio(
+            'Yapı Yaklaşık Birim Maliyetleri Tarih Geçerlilik Seçeneği:',
+            ['Tebliğ yayımlanma tarihi esas alınsın.', 'Tebliğde belirtilen geçerlilik süresi esas alınsın.'],
+            horizontal=False,
+            help="Yapı ruhsatı onay tarihini seçin"
+        )
+        if teblig_sinir_tarih_opsiyonu == 'Tebliğ yayımlanma tarihi esas alınsın.':
+            tarih_opsiyonu = "yayim"
+        else:
+            tarih_opsiyonu = "gecerlilik"
 
     if is_industrial == "Evet":
+        if is_industrial:
+            industrial_type = st.radio(
+                'Sanayi Yapısı Tipi',
+                ['İş deneyimine tabi sanayi yapısı', 'İş deneyimine tabi olmayan sanayi yapısı'],
+                horizontal=True,
+                help="Sanayi yapısının iş deneyimine tabi olup olmadığını seçin"
+            )
+
         year_category = st.radio("", ["2019 Öncesi", "2019 Sonrası"], horizontal=True)
 
         if year_category == "2019 Öncesi":
-            st.session_state.percentage_selected = st.checkbox("Belge Tutarı %20'si")
+            st.session_state.percentage_selected = st.checkbox("Belge Tutarı %20'si", value=True)
 
         if year_category == "2019 Sonrası":
             approval_date = st.date_input('Ruhsat Onay Tarihi',
-                                          min_value=date(2000, 1, 1), value=None)
+                                          min_value=date(2000, 1, 1), value=None, format="DD.MM.YYYY")
+            print(approval_date )
             authority_group = st.selectbox('Ruhsat Onay Tarihindeki Yetki Belge Grubu',
                                            ['A', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'E', 'E1',
                                             'F', 'F1', 'G', 'G1', 'H'])
@@ -159,26 +209,175 @@ elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
     with col3:
         calculate_base_button = st.button('Belge Tutarı Hesapla')
     with col4:
-        update_button = st.button('Güncelle')
+        # update_button = st.button('Güncelle')
+        pass
 
     if calculate_base_button:
-        if building_area != 0.0:
-            base_amount = calculate_building_permit_amount(building_class, building_area,
-                                                           completion_percentage)
-            formatted_base_amount = format_currency(base_amount)
-            st.session_state.current_document_amount = formatted_base_amount
-            st.session_state['base_amount'] = base_amount
-            st.rerun()
-        else:
-            st.error('Lütfen yapı alanını giriniz.')
+        # Kullanıcı verilerini dictionary olarak hazırla (sadece girdilerle)
+        raw_inputs = {
+            "application_date": application_date,
+            "contract_date": contract_date,
+            "acceptance_date": acceptance_date,
+            "building_class": building_class,
+            "building_class_application_date": building_class_application_dat,
+            "building_area": building_area,
+            "completion_percentage": completion_percentage,
+            "teblig_sinir_tarih_opsiyonu": teblig_sinir_tarih_opsiyonu,
+            "is_industrial": is_industrial,
+            "year_category": year_category if is_industrial == "Evet" else None,
+            "percentage_selected": (
+                st.session_state.get(
+                    "percentage_selected") if is_industrial == "Evet" and year_category == "2019 Öncesi" else None
+            ),
+            "approval_date": approval_date if is_industrial == "Evet" and year_category == "2019 Sonrası" else None,
+            "authority_group": authority_group if is_industrial == "Evet" and year_category == "2019 Sonrası" else None,
+            "green_building": green_building,
+            "industrial_type": industrial_type if is_industrial == "Evet" else None,
+            "tarih_opsiyonu": tarih_opsiyonu,
+            "tarih_opsiyonu_gercerlilik": "gecerlilik",
+        }
+
+        # Doğrulama
+        errors = validate_building_permit_inputs(raw_inputs)
+        if errors:
+            for error in errors:
+                st.error(error)
+            st.stop()
+
+
+        # Tüm parametreleri içeren sabit yapıyı oluştur
+        params = generate_building_permit_params(raw_inputs)
+
+        try:
+            unit_prices = get_unit_prices_for_building_classes(
+                contract_date=params["contract_date"],
+                application_date=params["application_date"],
+                building_class_contract=params["building_class"],
+                building_class_application=params["building_class_application_date"],
+                tarih_opsiyonu=params["tarih_opsiyonu"],
+                # json_path='birim_fiyatlar.json',
+                json_path=json_path_birim_fiyat
+            )
+            params.update(unit_prices)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_unit_price_ratio(params))
+
+        try:
+            unit_prices = get_unit_prices_for_building_classes_tutara_esas(
+                contract_date=params["contract_date"],
+                building_class_contract=params["building_class"],
+                tarih_opsiyonu='gecerlilik',
+                json_path=json_path_birim_fiyat
+            )
+            params.update(unit_prices)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+
+        if params["is_industrial"] == "Evet" and params["year_category"] == "2019 Sonrası":
+            try:
+                max_amount = get_max_industrial_amount(
+                    approval_date=params["approval_date"],
+                    authority_group=params["authority_group"],
+                    tarih_opsiyonu=params["tarih_opsiyonu"],
+                    # json_path="max_is_tutari.json",
+                    json_path=json_path_max
+                )
+                params["max_industrial_amount"] = max_amount
+            except ValueError as e:
+                st.error(str(e))
+                st.stop()
+
+        params["contract_previous_month"] = get_previous_month_info(params["contract_date"])
+        params["application_previous_month"] = get_previous_month_info(params["application_date"])
+
+        try:
+            ufe_data = get_ufe_data_and_ratio(
+                contract_month_info=params["contract_previous_month"],
+                application_month_info=params["application_previous_month"],
+                # json_path="yi_ufe_data.json",
+                json_path=json_path_ufe_data
+            )
+            params.update(ufe_data)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_ufe_ratio(params))
+
+        try:
+            update_ratio = calculate_document_update_ratio(params)
+            params["document_update_ratio"] = update_ratio
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_document_update_ratio(params))
+
+        green_factor = get_green_building_factor(params.get("green_building"))
+        params["green_building_factor"] = green_factor
+
+        try:
+            base_amount = calculate_base_amount(params)
+            params["base_amount"] = base_amount
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_base_amount(params))
+
+        try:
+            contractor_amount = calculate_contractor_base_amount(params)
+            params["contractor_base_amount"] = contractor_amount
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_contractor_base_amount(params))
+
+        try:
+            updated_amount = calculate_updated_contractor_amount(params)
+            params["updated_contractor_amount"] = updated_amount
+            updated_amount_formatted = format_currency(updated_amount)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        rapor_log.append(log_updated_contractor_amount(params))
+
+        st.success("Tüm kontroller sağlandı, hesaplamalar yapıldı.")
+        st.success(f'Güncel Belge Tutarı: {updated_amount_formatted}')
+
+        with st.expander("📄 Hesaplama Detaylarını Göster", expanded=False):
+            st.markdown("### 📄 Açıklamalı Hesaplama Adımları")
+            for entry in rapor_log:
+                st.markdown(entry)
+                st.markdown("---")
+
+        with st.expander("🧮 Hesaplama Parametrelerini Göster", expanded=False):
+            st.markdown("### 📄 Hesap Parametreleri")
+            params_pretty = json.dumps(params, indent=4, ensure_ascii=False, default=str)
+            st.code(params_pretty, language="json")
+
+        # st.write("### Params")
+        # st.json(params)
+        #
+        # st.markdown("### 📄 Açıklamalı Hesaplama Adımları")
+        # for entry in rapor_log:
+        #     st.markdown(entry)
+
 
 else:  # EKAP İş Deneyim Belgesi Ekle
     # Sözleşme Tarihi ve Geçici Kabul/İskan Tarihi
     col1, col2 = st.columns(2)
     with col1:
-        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None)
+        contract_date = st.date_input('Sözleşme Tarihi', min_value=date(2000, 1, 1), value=None, format="DD.MM.YYYY")
     with col2:
-        acceptance_date = st.date_input('Geçici Kabul/İskan Tarihi', min_value=date(2000, 1, 1), value=None)
+        acceptance_date = st.date_input('Geçici Kabul/İskan Tarihi', min_value=date(2000, 1, 1), value=None, format="DD.MM.YYYY")
 
     # İlk Sözleşme Bedeli ve Belge Tutarı
     col1, col2 = st.columns(2)
@@ -244,6 +443,7 @@ else:  # EKAP İş Deneyim Belgesi Ekle
                     'Yapı Ruhsatı Onay Tarihi',
                     value=date(2019, 12, 2),
                     min_value=date(2019, 12, 2),
+                    format="DD.MM.YYYY",
                     help="Yapı ruhsatının onay tarihini seçin"
                 )
             with col6:
@@ -272,8 +472,8 @@ else:  # EKAP İş Deneyim Belgesi Ekle
 
         if None not in (contract_date, acceptance_date) and 0.0 not in (initial_amount, document_amount):
             try:
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                json_path = os.path.join(current_dir, 'yi_ufe_data.json')
+                # current_dir = os.path.dirname(os.path.abspath(__file__))
+                json_path = json_path_ufe_data
 
                 try:
                     with open(json_path, 'r', encoding='utf-8') as f:
