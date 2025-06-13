@@ -1,4 +1,5 @@
 rapor_log = []
+author = "noname"
 import streamlit as st
 import pandas as pd
 import json
