@@ -34,7 +34,8 @@ from helpers_ykib import (
     get_green_building_factor,
     calculate_base_amount,
     calculate_contractor_base_amount,
-    calculate_updated_contractor_amount
+    calculate_updated_contractor_amount,
+    get_unit_prices_for_building_classes_tutara_esas
 )
 
 from rapor_helpers import (
@@ -51,7 +52,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 json_path_max = os.path.join(current_dir, 'max_is_tutari.json')
 json_path_birim_fiyat = os.path.join(current_dir, 'birim_fiyatlar.json')
 json_path_ufe_data = os.path.join(current_dir, 'yi_ufe_data.json')
-json_path_ufe_data = os.path.join(current_dir, 'yi_ufe_data.json')
+
 
 
 st.title('İş Deneyimi Girişi')
@@ -232,7 +233,8 @@ elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
             "authority_group": authority_group if is_industrial == "Evet" and year_category == "2019 Sonrası" else None,
             "green_building": green_building,
             "industrial_type": industrial_type if is_industrial == "Evet" else None,
-            "tarih_opsiyonu": tarih_opsiyonu
+            "tarih_opsiyonu": tarih_opsiyonu,
+            "tarih_opsiyonu_gercerlilik": "gecerlilik",
         }
 
         # Doğrulama
@@ -262,6 +264,19 @@ elif experience_type == "Yapı Kullanma İzin Belgesi Ekle":
             st.stop()
 
         rapor_log.append(log_unit_price_ratio(params))
+
+        try:
+            unit_prices = get_unit_prices_for_building_classes_tutara_esas(
+                contract_date=params["contract_date"],
+                building_class_contract=params["building_class"],
+                tarih_opsiyonu='gecerlilik',
+                json_path=json_path_birim_fiyat
+            )
+            params.update(unit_prices)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
 
         if params["is_industrial"] == "Evet" and params["year_category"] == "2019 Sonrası":
             try:
